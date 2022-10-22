@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+    </head>
+    <body>
+        <header>
+            <h1>jar-book online beta</h1>
+        </header>
+        <section>
+            <p>ROOM ID と PLAYER NAME を入力のうえ参加してください。</p>
+            <div>
+                <input type="text" id="room-id" placeholder="ROOM ID">
+                <input type="text" id="player-name" placeholder="PLAYER NAME">
+            </div>
+            <div>
+            <div>
+                <button type="button" onclick="onClickButton()">
+                    部屋に参加する
+                </button>
+            </div>
+        </section>
+        <footer>
+            <a href="http://twitter.com/aseruneko">@aseruneko</a>
+        </footer>
+        <script>
+            function onClickButton() {
+                const roomId = document.getElementById("room-id").value;
+                const playerName = document.getElementById("player-name").value;
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "../api/rooms/join", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onreadystatechange = function() {
+                    if ((xhr.readyState == 4) && (xhr.status == 200)) {
+                        const res = JSON.parse(xhr.response);
+                        localStorage.setItem('userId', res.userId);
+                        localStorage.setItem('roomId',res.roomId);
+                        window.location.href = `${res.roomId}`
+                    }
+                }
+                xhr.send(JSON.stringify(
+                    {
+                        roomId: roomId,
+                        playerName: playerName,
+                    }
+                ));
+            };
+        </script>
+    </body>
+</html>
