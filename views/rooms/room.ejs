@@ -11,49 +11,25 @@
         </header>
         <section>
             <dl>
-                <dt>
-                    部屋名
-                </dt>
-                <dd>
-                    <%- roomName %>
-                </dd>
-                <dt>
-                    ID
-                </dt>
-                <dd>
-                    <%- id %>
-                </dd>
-                <dt>
-                    status
-                </dt>
-                <dd>
-                    <%- status %>
-                </dd>
-                <dt>
-                    制限時間
-                </dt>
-                <dd>
-                    <%- minuteMax %> 分
-                </dd>
-                <dt>
-                    ページ数
-                </dt>
-                <dd>
-                    <%- pageNum %> ページ
-                </dd>
+                <dt>部屋名</dt>
+                <dd><%- roomName %></dd>
+                <dt>ID</dt>
+                <dd><%- id %></dd>
+                <dt>status</dt>
+                <dd><%- status %></dd>
+                <dt>制限時間</dt>
+                <dd><%- minuteMax %> 分</dd>
+                <dt>ページ数</dt>
+                <dd><%- pageNum %> ページ</dd>
             </dl>
             <h1>プレイヤー</h1>
             <ul id="players">
                 <% players.forEach(function(player) { %>
-                    <li>
-                        <%= player.name %> : <%= player.memberNo + 1 %> 番目
-                    </li>
+                    <li><%= player.name %> : <%= player.memberNo + 1 %> 番目</li>
                 <% }); %>
             </ul>
             <% if(status == "WAITING"){ %>
-                <button onclick="onClickRoomCreation()">
-                    始める
-                </button>
+                <button onclick="onClickRoomCreation()">始める</button>
             <% } %>
             <% if(status == "TITLING"){ %>
                 <section>
@@ -95,6 +71,36 @@
                     </div>
                 </section>
             <% } %>
+            <% if(status == "WRITING"){ %>
+                <div>
+                    残り時間
+                    <p id="timer"></p>
+                </div>
+                <h1 id="book-title"></h1>
+                <div>
+                    <% if(editPageNum != 0){ %>
+                        <p><%- editPageNum %>ページ目</p>
+                    <% } %>
+                    <div id="previous-page"></div>
+                </div>
+                <div>
+                    <p><%- editPageNum + 1 %>ページ目</p>
+                    <textarea id="current-page" cols="100" rows="20"></textarea>
+                </div>
+                <button onclick="onClickPageSubmission()">送信</button>
+                <p id="page-submission-text"></p>
+            <% } %>
+            <% if(status == "READING"){ %>
+                <% books.forEach(function(book) { %>
+                    <div>
+                        <h1><%- book.title %></h1>
+                        <% book.pages.forEach(function(page) { %>
+                            <hr>
+                            <p><%- page %></p>
+                        <% }); %>
+                    </div>
+                <% }); %>
+            <% } %>
         </section>
         <footer>
             <a href="http://twitter.com/aseruneko">@aseruneko</a>
@@ -103,7 +109,9 @@
             const socket = io();
             const roomId = localStorage.getItem("roomId");
             const userId = localStorage.getItem("userId");
+            const status = localStorage.getItem("status");
             var choosedTitleNum = 0;
+            var timer = 0;
             function onClickRoomCreation() {
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "../api/rooms/start", true);
@@ -128,6 +136,20 @@
                 ));
                 document.getElementById("title-submission-btn").disabled = true;
                 document.getElementById("title-submitted").innerText = 'タイトル送信完了, 全員の提出が完了するまでお待ち下さい';
+            }
+            function onClickPageSubmission() {
+                var xhr = new XMLHttpRequest();
+                const page = document.getElementById("current-page").value;
+                xhr.open("POST", `../api/book/edit`, true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.send(JSON.stringify(
+                    {
+                        roomId: roomId,
+                        userId: userId,
+                        page: page,
+                    }
+                ));
+                document.getElementById("page-submission-text").innerText = '全員が揃うまで何回でも提出可能です';
             }
             function onClickSelectTitleOne() {
                 const titleOne = [];
@@ -156,11 +178,37 @@
                 document.getElementById("title_3_0").innerText = selectedOne;
                 document.getElementById("title_3_1").innerText = selectedTwo;
             }
+            function countDown() {
+                if(timer > 0) {
+                    timer -= 1;
+                    const minute = Math.floor(timer / 60);
+                    const second = timer % 60;
+                    const timerStr = `${minute.toString()}分${second.toString()}秒`;
+                    document.getElementById("timer").innerText = timerStr;
+                }
+            }
             socket.on('roomStatusUpdation', (message) => {
                 if (message.roomId == roomId) {
+                    window.localStorage.setItem('status', message.status)
                     window.location.reload();
                 }
             });
+            if(status == "WRITING") {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", `../api/rooms/${roomId}/users/${userId}`, true);
+                xhr.onload = function () {
+                    const res = JSON.parse(xhr.response);
+                    document.getElementById("book-title").innerText = `『${res.title}』`;
+                    if(res.previousPage.length > 0) {
+                        document.getElementById("previous-page").innerText = res.previousPage[0];
+                    }
+                    const minuteMax = parseInt(res.minuteMax);
+                    const secondMax = minuteMax * 60;
+                    timer = secondMax
+                    setInterval(countDown, 1000);
+                }
+                xhr.send();
+            }
         </script>
     </body>
 </html>

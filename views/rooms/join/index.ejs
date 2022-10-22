@@ -36,6 +36,7 @@
                         const res = JSON.parse(xhr.response);
                         localStorage.setItem('userId', res.userId);
                         localStorage.setItem('roomId',res.roomId);
+                        localStorage.setItem('status', "WAITING");
                         window.location.href = `${res.roomId}`
                     }
                 }
