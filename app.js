@@ -29,7 +29,7 @@ app.get("/rooms/join", (req, res) => {
 
 app.get("/rooms/:id", (req,res) => {
   const room = rooms.find(room => room.id == req.params.id);
-  res.render("./rooms/room.ejs", room);
+  res.render("./rooms/room.ejs", {...room});
 });
 
 app.post('/api/rooms/create',(req, res) =>  {
@@ -48,7 +48,7 @@ app.post('/api/rooms/join', (req,res) => {
   const playerName = req.body.playerName;
   const room = rooms.find(room => room.id == roomId);
   const player = room.addPlayer(playerName);
-  io.emit('roomStatusUpdation', {roomId: req.body.roomId});
+  io.emit('roomStatusUpdation', {roomId: req.body.roomId, status: room.status});
   res.json({roomId: roomId, userId: player.id});
 });
 
@@ -57,10 +57,10 @@ app.post('/api/books/create',(req,res) => {
   const roomId = req.body.roomId;
   const title = req.body.title;
   const room = rooms.find(room => room.id == roomId);
-  room.addBook(title);
+  room.addBook(userId, title);
   if(room.allTitleSubmitted()) {
     room.startWriting();
-    io.emit('roomStatusUpdation', {roomId: req.body.roomId});
+    io.emit('roomStatusUpdation', {roomId: req.body.roomId, status: room.status});
   }
   res.json();
 })
@@ -68,8 +68,36 @@ app.post('/api/books/create',(req,res) => {
 app.post('/api/rooms/start',(req, res) => {
   const room = rooms.find(room => room.id == req.body.roomId);
   room.startTitling();
-  io.emit('roomStatusUpdation', {roomId: req.body.roomId});
+  io.emit('roomStatusUpdation', {roomId: req.body.roomId, status: room.status});
   res.json();
+});
+
+app.post('/api/book/edit', (req, res) => {
+  const userId = req.body.userId;
+  const roomId = req.body.roomId;
+  const page = req.body.page;
+  const room = rooms.find(room => room.id == roomId);
+  room.write(userId, page);
+  if(room.allPageSubmitted()) {
+    room.nextPage();
+    if (room.editPageNum == room.pageNum) {
+      room.finishWriting();
+    }
+    io.emit('roomStatusUpdation', {roomId: req.body.roomId, status: room.status});
+  }
+  res.json();
+})
+
+app.get('/api/rooms/:roomId/users/:userId', (req,res) => {
+  const room = rooms.find(room => room.id == req.params.roomId);
+  const userId = req.params.userId;
+  const book = room.pickBook(userId);
+  if(book.editingPageNum == 0) {
+    res.json({title: book.title, minuteMax: room.minuteMax, previousPage: []});
+  } else {
+    const page = room.pickPreviousPage(userId);
+    res.json({title: book.title, minuteMax: room.minuteMax, previousPage: [page]});
+  }
 });
 
 http.listen(port, () => console.log(`Example app listening on port ${port}!`));
