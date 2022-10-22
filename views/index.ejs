@@ -2,21 +2,23 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title></title>
+        <title>jar-book</title>
+        <link rel="stylesheet" href="https://unpkg.com/modern-css-reset/dist/reset.min.css">
+        <link href="/css/style.css" rel="stylesheet">
     </head>
     <body>
         <header>
-            <h1>jar-book online beta</h1>
+            <h1>jar-book v1.0.0</h1>
         </header>
         <section>
-            <div>
-                <a href="./rooms/new">部屋を作成する</a>
-            </div>
-            <div>
-                <a href="./rooms/join">部屋に参加する</a>
-            </div>
+            <button class="link" onclick="location.href='./rooms/new'">
+                ● 部屋を作成する
+            </button>
+            <button class="link" onclick="location.href='./rooms/join'">
+                ● 部屋に参加する
+            </button>
         </section>
-        <section>
+        <section class="card">
             <h1>遊び方</h1>
             <dl>
                 <dt>
