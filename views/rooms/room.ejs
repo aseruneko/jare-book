@@ -2,7 +2,9 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title></title>
+        <title>jar-book</title>
+        <link rel="stylesheet" href="https://unpkg.com/modern-css-reset/dist/reset.min.css">
+        <link href="/css/style.css" rel="stylesheet">
         <script src="/socket.io/socket.io.js"></script>
     </head>
     <body>
@@ -72,20 +74,20 @@
                 </section>
             <% } %>
             <% if(status == "WRITING"){ %>
-                <div>
-                    残り時間
-                    <p id="timer"></p>
-                </div>
                 <h1 id="book-title"></h1>
                 <div>
                     <% if(editPageNum != 0){ %>
-                        <p><%- editPageNum %>ページ目</p>
+                        <p class="page-num"><%- editPageNum %>ページ目</p>
                     <% } %>
                     <div id="previous-page"></div>
                 </div>
                 <div>
-                    <p><%- editPageNum + 1 %>ページ目</p>
+                    <p class="page-num"><%- editPageNum + 1 %>ページ目</p>
                     <textarea id="current-page" cols="100" rows="20"></textarea>
+                </div>
+                <div>
+                    残り時間
+                    <p id="timer"></p>
                 </div>
                 <button onclick="onClickPageSubmission()">送信</button>
                 <p id="page-submission-text"></p>
@@ -96,7 +98,7 @@
                         <h1><%- book.title %></h1>
                         <% book.pages.forEach(function(page) { %>
                             <hr>
-                            <p><%- page %></p>
+                            <p class="page"><%- page %></p>
                         <% }); %>
                     </div>
                 <% }); %>
