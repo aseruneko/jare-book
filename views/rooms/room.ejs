@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="/socket.io/socket.io.js"></script>
+    </head>
+    <body>
+        <header>
+            <h1>jar-book online beta</h1>
+        </header>
+        <section>
+            <dl>
+                <dt>
+                    部屋名
+                </dt>
+                <dd>
+                    <%- roomName %>
+                </dd>
+                <dt>
+                    ID
+                </dt>
+                <dd>
+                    <%- id %>
+                </dd>
+                <dt>
+                    status
+                </dt>
+                <dd>
+                    <%- status %>
+                </dd>
+                <dt>
+                    制限時間
+                </dt>
+                <dd>
+                    <%- minuteMax %> 分
+                </dd>
+                <dt>
+                    ページ数
+                </dt>
+                <dd>
+                    <%- pageNum %> ページ
+                </dd>
+            </dl>
+            <h1>プレイヤー</h1>
+            <ul id="players">
+                <% players.forEach(function(player) { %>
+                    <li>
+                        <%= player.name %> : <%= player.memberNo + 1 %> 番目
+                    </li>
+                <% }); %>
+            </ul>
+            <% if(status == "WAITING"){ %>
+                <button onclick="onClickRoomCreation()">
+                    始める
+                </button>
+            <% } %>
+            <% if(status == "TITLING"){ %>
+                <section>
+                    <h1>小説の題名を決める</h1>
+                    <div>
+                        <h2>思いつく名詞を4つ書いてみよう</h2>
+                        <input id="title_1_1">
+                        <input id="title_1_2">
+                        <input id="title_1_3">
+                        <input id="title_1_4">
+                    </div>
+                    <div>
+                        <h2>名詞を１つ選び、その名詞から思いつくことを書いてみよう</h2>
+                        <span>
+                            <button onclick="onClickSelectTitleOne()">
+                                上から1つ選ぶ
+                            </button>
+                            <p id="title_2_0"></p>
+                        </span>
+                        <input id="title_2_1">
+                        <input id="title_2_2">
+                        <input id="title_2_3">
+                        <input id="title_2_4">
+                    </div>
+                    <div>
+                        <h2>②と①を組み合わせて不思議な題名をつくろう</h2>
+                        <span>
+                            <button onclick="onClickSelectTitleTwo()">
+                                1つずつ、単語を選ぶ
+                            </button>
+                            <p id="title_3_0"></p>
+                            <p id="title_3_1"></p>
+                        </span>
+                        <input id="title_3">
+                        <button id="title-submission-btn" onclick="onClickTitleSubmission()">
+                            決定
+                        </button>
+                        <p id="title-submitted"></p>
+                    </div>
+                </section>
+            <% } %>
+        </section>
+        <footer>
+            <a href="http://twitter.com/aseruneko">@aseruneko</a>
+        </footer>
+        <script>
+            const socket = io();
+            const roomId = localStorage.getItem("roomId");
+            const userId = localStorage.getItem("userId");
+            var choosedTitleNum = 0;
+            function onClickRoomCreation() {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "../api/rooms/start", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.send(JSON.stringify(
+                    {
+                        roomId: roomId,
+                    }
+                ));
+            };
+            function onClickTitleSubmission() {
+                const title = document.getElementById("title_3").value;
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "../api/books/create", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.send(JSON.stringify(
+                    {
+                        roomId: roomId,
+                        userId: userId,
+                        title: title,
+                    }
+                ));
+                document.getElementById("title-submission-btn").disabled = true;
+                document.getElementById("title-submitted").innerText = 'タイトル送信完了, 全員の提出が完了するまでお待ち下さい';
+            }
+            function onClickSelectTitleOne() {
+                const titleOne = [];
+                titleOne.push(document.getElementById("title_1_1").value);
+                titleOne.push(document.getElementById("title_1_2").value);
+                titleOne.push(document.getElementById("title_1_3").value);
+                titleOne.push(document.getElementById("title_1_4").value);
+                choosedTitleNum = Math.floor(Math.random() * titleOne.length);
+                const selected = titleOne[choosedTitleNum];
+                document.getElementById("title_2_0").innerText = selected;
+            }
+            function onClickSelectTitleTwo() {
+                const titleOne = [];
+                titleOne.push(document.getElementById("title_1_1").value);
+                titleOne.push(document.getElementById("title_1_2").value);
+                titleOne.push(document.getElementById("title_1_3").value);
+                titleOne.push(document.getElementById("title_1_4").value);
+                titleOne.splice(choosedTitleNum, 1);
+                const titleTwo = [];
+                titleTwo.push(document.getElementById("title_2_1").value);
+                titleTwo.push(document.getElementById("title_2_2").value);
+                titleTwo.push(document.getElementById("title_2_3").value);
+                titleTwo.push(document.getElementById("title_2_4").value);
+                const selectedOne = titleOne[Math.floor(Math.random() * titleOne.length)];
+                const selectedTwo = titleTwo[Math.floor(Math.random() * titleOne.length)];
+                document.getElementById("title_3_0").innerText = selectedOne;
+                document.getElementById("title_3_1").innerText = selectedTwo;
+            }
+            socket.on('roomStatusUpdation', (message) => {
+                if (message.roomId == roomId) {
+                    window.location.reload();
+                }
+            });
+        </script>
+    </body>
+</html>
