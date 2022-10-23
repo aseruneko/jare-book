@@ -10,6 +10,8 @@ const Room = require("./src/room");
 const { write } = require("fs");
 var rooms = [];
 
+const VERSION = "1.1.1";
+
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({
     extended: true
@@ -18,20 +20,20 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 
 app.get("/", (req, res) => {
-  res.render("./index.ejs");
+  res.render("./index.ejs", {version: VERSION});
 });
 
 app.get("/rooms/new", (req, res) => {
-  res.render("./rooms/new/index.ejs");
+  res.render("./rooms/new/index.ejs", {version: VERSION});
 });
 
 app.get("/rooms/join", (req, res) => {
-  res.render("./rooms/join/index.ejs");
+  res.render("./rooms/join/index.ejs", {version: VERSION});
 });
 
 app.get("/rooms/:id", (req,res) => {
   const room = rooms.find(room => room.id == req.params.id);
-  res.render("./rooms/room.ejs", {...room});
+  res.render("./rooms/room.ejs", {...room, version: VERSION});
 });
 
 app.post('/api/rooms/create',(req, res) =>  {
@@ -46,6 +48,8 @@ app.post('/api/rooms/create',(req, res) =>  {
     req.body.playerName,
     writeOrderStyle,
   );
+  const now = new Date();
+  rooms = rooms.filter(room => now.getTime() - room.createdAt.getTime() < 1000*60*60*24);
   rooms.push(room);
   res.json({roomId: room.id, userId: room.players[0].id});
 });
@@ -65,6 +69,7 @@ app.post('/api/books/create',(req,res) => {
   const title = req.body.title;
   const room = rooms.find(room => room.id == roomId);
   room.addBook(userId, title);
+  io.emit('userStatusUpdation', {roomId: req.body.roomId, userId: userId});
   if(room.allTitleSubmitted()) {
     room.startWriting();
     io.emit('roomStatusUpdation', {roomId: req.body.roomId, status: room.status});
@@ -85,6 +90,7 @@ app.post('/api/book/edit', (req, res) => {
   const page = req.body.page;
   const room = rooms.find(room => room.id == roomId);
   room.write(userId, page);
+  io.emit('userStatusUpdation', {roomId: req.body.roomId, userId: userId});
   if(room.allPageSubmitted()) {
     room.nextPage();
     if (room.editPageNum == room.pageNum) {
