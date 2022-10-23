@@ -56,6 +56,11 @@ const RoomStatus = {
     Reading: 'READING',
 };
 
+const WriteOrderStyle = {
+    Ordered: 'ORDERED',
+    Random: 'RANDOM'
+}
+
 class Room {
     constructor(
         id,
@@ -67,6 +72,9 @@ class Room {
         players,
         books,
         editPageNum,
+        writeOrderStyle,
+        previousWriteOrder,
+        writeOrder,
     ) {
         this.id = id;
         this.roomName = roomName;
@@ -77,15 +85,43 @@ class Room {
         this.players = players;
         this.books = books;
         this.editPageNum = editPageNum;
+        this.writeOrderStyle = writeOrderStyle;
+        this.previousWriteOrder = previousWriteOrder;
+        this.writeOrder = writeOrder;
     }
     startTitling() {
         this.status = RoomStatus.Titling;
     }
     startWriting() {
         this.editPageNum = 0;
+        this.writeOrder = this.players.map(player => {
+            if(player.memberNo == 0) {
+                return this.players.length - 1;
+            } else {
+                return player.memberNo - 1;
+            }
+        })
         this.status = RoomStatus.Writing;
     }
     nextPage() {
+        this.previousWriteOrder = this.writeOrder;
+        var writeOrd = [];
+        for (const player of this.players) {
+            if (this.players.length == 1) {
+                writeOrd.push(0);
+            } else {
+                var candidate = this.players.map(p => {
+                    return p.memberNo
+                }).filter(c => !writeOrd.includes(c));
+                if (candidate.length == 1) {
+                    writeOrd.push(candidate[0]);
+                } else {
+                    var cand = candidate.filter(c => c != this.previousWriteOrder[player.memberNo]);
+                    writeOrd.push(cand[Math.floor(Math.random() * cand.length)]);
+                }
+            }
+        };
+        this.writeOrder = writeOrd;
         this.editPageNum = this.editPageNum + 1;
     }
     finishWriting() {
@@ -106,12 +142,19 @@ class Room {
     pickBook(userId) {
         const player = this.players.find(player => player.id == userId);
         const playerNo = player.memberNo;
-        var authorNo = player.memberNo - 1 - this.editPageNum;
-        while (authorNo < 0) {
-            authorNo = authorNo + this.players.length;
+        switch(this.writeOrderStyle) {
+            case "ORDERED":
+                var authorNo = player.memberNo - 1 - this.editPageNum;
+                while (authorNo < 0) {
+                    authorNo = authorNo + this.players.length;
+                }
+                const author = this.players.find(player => player.memberNo == authorNo);
+                return this.books.find(book => book.authorId == author.id);
+                break;
+            case "RANDOM":
+                return this.books[this.writeOrder[playerNo]];
+                break;
         }
-        const author = this.players.find(player => player.memberNo == authorNo);
-        return this.books.find(book => book.authorId == author.id);
     }
     pickPreviousPage(userId) {
         if(this.editPageNum == 0) {
@@ -132,7 +175,8 @@ class Room {
         roomName,
         minuteMax,
         pageNum,
-        hostPlayerName
+        hostPlayerName,
+        writeOrderStyle = WriteOrderStyle.Ordered,
     ) {
         const id = crypto.randomUUID();
         const hostPlayer = Player.create(hostPlayerName, 0);
@@ -145,7 +189,10 @@ class Room {
             RoomStatus.Waiting,
             [hostPlayer],
             [],
-            -1
+            -1,
+            writeOrderStyle,
+            [],
+            []
         )
         return room;
     }

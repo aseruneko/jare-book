@@ -7,57 +7,86 @@
         <link href="/css/style.css" rel="stylesheet">
         <script src="/socket.io/socket.io.js"></script>
     </head>
-    <body>
+    <body id="book-room-body" class="book-room">
         <header>
-            <h1>jar-book online beta</h1>
+            <h1>jar-book@1.1.0</h1>
         </header>
         <section>
-            <dl>
-                <dt>部屋名</dt>
-                <dd><%- roomName %></dd>
-                <dt>ID</dt>
-                <dd><%- id %></dd>
-                <dt>status</dt>
-                <dd><%- status %></dd>
-                <dt>制限時間</dt>
-                <dd><%- minuteMax %> 分</dd>
-                <dt>ページ数</dt>
-                <dd><%- pageNum %> ページ</dd>
-            </dl>
-            <h1>プレイヤー</h1>
-            <ul id="players">
+            <div class="status-board">
+                <div class="row">
+                    <div>部屋名</div>
+                    <div><%- roomName %></div>
+                </div>
+                <div class="row">
+                    <div>ID</div>
+                    <div><%- id %>  <a id="room-id-copy-link" onclick="roomIdcopy()">[COPY]</a></div>
+                </div>
+                <div class="row">
+                    <div>status</div>
+                    <div><%- status %></div>
+                </div>
+                <div class="row">
+                    <div>制限時間</div>
+                    <div><%- minuteMax %> 分</div>
+                </div>
+                <div class="row">
+                    <div>ページ数</div>
+                    <div><%- pageNum %> ページ</div>
+                </div>
+                <div class="row">
+                    <div>執筆順</div>
+                    <div><%- writeOrderStyle %></div>
+                </div>
+            </div>
+            <div class="player-board">
+                <div class="player">
+                    <div class="name th">名前</div>
+                    <div class="memberNo th">席順</div>
+                </div>
                 <% players.forEach(function(player) { %>
-                    <li><%= player.name %> : <%= player.memberNo + 1 %> 番目</li>
+                    <div class="player">
+                        <div class="name"><%= player.name %></div>
+                        <div class="memberNo"><%= player.memberNo + 1 %> 番目</div>
+                    </div>
                 <% }); %>
-            </ul>
+            </div>
             <% if(status == "WAITING"){ %>
-                <button onclick="onClickRoomCreation()">始める</button>
+                <button id="start-button" class="primary-btn not-display" onclick="onClickRoomCreation()">始める</button>
+                <p id="host-waiting-text" class="gray-text">ホストの開始を待っています...</p>
             <% } %>
             <% if(status == "TITLING"){ %>
-                <section>
+                <section class="title-edit-board">
                     <h1>小説の題名を決める</h1>
                     <div>
-                        <h2>思いつく名詞を4つ書いてみよう</h2>
-                        <input id="title_1_1">
-                        <input id="title_1_2">
-                        <input id="title_1_3">
-                        <input id="title_1_4">
+                        <h2>Step1. ランダムに名詞を4つ選ぶ</h2>
+                        <div class="input-row">
+                            <input class="half-text" id="title_1_1">
+                            <input class="half-text" id="title_1_2">
+                        </div>
+                        <div class="input-row">
+                            <input class="half-text" id="title_1_3">
+                            <input class="half-text" id="title_1_4">
+                        </div>
                     </div>
                     <div>
-                        <h2>名詞を１つ選び、その名詞から思いつくことを書いてみよう</h2>
+                        <h2>Step2. 上から1つ選び、そこから連想される名詞を4つ選ぶ</h2>
                         <span>
                             <button onclick="onClickSelectTitleOne()">
                                 上から1つ選ぶ
                             </button>
                             <p id="title_2_0"></p>
                         </span>
-                        <input id="title_2_1">
-                        <input id="title_2_2">
-                        <input id="title_2_3">
-                        <input id="title_2_4">
+                        <div class="input-row">
+                            <input class="half-text" id="title_2_2">
+                            <input class="half-text" id="title_2_3">
+                        </div>
+                        <div class="input-row">
+                            <input class="half-text" id="title_2_1">
+                            <input class="half-text" id="title_2_4">
+                        </div>
                     </div>
                     <div>
-                        <h2>②と①を組み合わせて不思議な題名をつくろう</h2>
+                        <h2>Step3. 1つずつ単語を選び、それを組み合わせタイトルにする</h2>
                         <span>
                             <button onclick="onClickSelectTitleTwo()">
                                 1つずつ、単語を選ぶ
@@ -65,55 +94,67 @@
                             <p id="title_3_0"></p>
                             <p id="title_3_1"></p>
                         </span>
-                        <input id="title_3">
-                        <button id="title-submission-btn" onclick="onClickTitleSubmission()">
-                            決定
-                        </button>
-                        <p id="title-submitted"></p>
+                        <div class="title-submit-wrapper">
+                            <input class="long-text" id="title_3" placeholder="小説のタイトル">
+                            <button class="primary-btn" id="title-submission-btn" onclick="onClickTitleSubmission()">
+                                決定
+                            </button>
+                            <p id="title-submitted"></p>
+                        </div>
                     </div>
                 </section>
             <% } %>
             <% if(status == "WRITING"){ %>
-                <h1 id="book-title"></h1>
-                <div>
-                    <% if(editPageNum != 0){ %>
-                        <p class="page-num"><%- editPageNum %>ページ目</p>
-                    <% } %>
-                    <div id="previous-page"></div>
-                </div>
-                <div>
-                    <p class="page-num"><%- editPageNum + 1 %>ページ目</p>
-                    <textarea id="current-page" cols="100" rows="20"></textarea>
-                </div>
-                <div>
-                    残り時間
-                    <p id="timer"></p>
-                </div>
-                <button onclick="onClickPageSubmission()">送信</button>
-                <p id="page-submission-text"></p>
+                <section class="writing-board">
+                    <h1 id="book-title"></h1>
+                    <div>
+                        <% if(editPageNum != 0){ %>
+                            <p class="page-num"><%- editPageNum %>ページ目</p>
+                        <% } %>
+                        <div id="previous-page" class="not-display"></div>
+                    </div>
+                    <div>
+                        <p class="page-num"><%- editPageNum + 1 %>ページ目</p>
+                        <textarea id="current-page" rows="10"></textarea>
+                    </div>
+                    <div class="timer-wrapper">
+                        <p class="label">残り時間</p>
+                        <p id="timer"></p>
+                    </div>
+                    <button class="primary-btn" onclick="onClickPageSubmission()">送信</button>
+                    <p id="page-submission-text"></p>
+                </section>
             <% } %>
             <% if(status == "READING"){ %>
                 <% books.forEach(function(book) { %>
-                    <div>
-                        <h1><%- book.title %></h1>
+                    <section class="view-board">
+                        <p>--------------------------------------------------</p>
+                        <h1>『<%- book.title %>』</h1>
                         <% book.pages.forEach(function(page) { %>
-                            <hr>
+                            <p>--------------------------------------------------</p>
                             <p class="page"><%- page %></p>
                         <% }); %>
-                    </div>
+                    </section>
                 <% }); %>
             <% } %>
         </section>
         <footer>
             <a href="http://twitter.com/aseruneko">@aseruneko</a>
+            <a href="/">戻る</a>
         </footer>
         <script>
             const socket = io();
             const roomId = localStorage.getItem("roomId");
             const userId = localStorage.getItem("userId");
             const status = localStorage.getItem("status");
+            var redFlag = false;
             var choosedTitleNum = 0;
             var timer = 0;
+            function roomIdcopy() {
+                navigator.clipboard.writeText(roomId).then(() => {
+                    document.getElementById("room-id-copy-link").innerText = "[COPIED!]";
+                });
+            }
             function onClickRoomCreation() {
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "../api/rooms/start", true);
@@ -137,6 +178,7 @@
                     }
                 ));
                 document.getElementById("title-submission-btn").disabled = true;
+                document.getElementById("title-submission-btn").classList = ["primary-btn disabled-btn"];
                 document.getElementById("title-submitted").innerText = 'タイトル送信完了, 全員の提出が完了するまでお待ち下さい';
             }
             function onClickPageSubmission() {
@@ -161,7 +203,7 @@
                 titleOne.push(document.getElementById("title_1_4").value);
                 choosedTitleNum = Math.floor(Math.random() * titleOne.length);
                 const selected = titleOne[choosedTitleNum];
-                document.getElementById("title_2_0").innerText = selected;
+                document.getElementById("title_2_0").innerText = `『${selected}』が選ばれました`;
             }
             function onClickSelectTitleTwo() {
                 const titleOne = [];
@@ -177,8 +219,8 @@
                 titleTwo.push(document.getElementById("title_2_4").value);
                 const selectedOne = titleOne[Math.floor(Math.random() * titleOne.length)];
                 const selectedTwo = titleTwo[Math.floor(Math.random() * titleOne.length)];
-                document.getElementById("title_3_0").innerText = selectedOne;
-                document.getElementById("title_3_1").innerText = selectedTwo;
+                document.getElementById("title_3_0").innerText = `『${selectedOne}』が選ばれました`;
+                document.getElementById("title_3_1").innerText = `『${selectedTwo}』が選ばれました`;
             }
             function countDown() {
                 if(timer > 0) {
@@ -187,6 +229,11 @@
                     const second = timer % 60;
                     const timerStr = `${minute.toString()}分${second.toString()}秒`;
                     document.getElementById("timer").innerText = timerStr;
+                } else {
+                    if(redFlag == false) {
+                        redFlag = true;
+                        document.getElementById("book-room-body").classList = ["book-room red-alert"];
+                    }
                 }
             }
             socket.on('roomStatusUpdation', (message) => {
@@ -195,18 +242,38 @@
                     window.location.reload();
                 }
             });
+            if(status == "WAITING") {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", `../api/rooms/${roomId}/users/${userId}/is-host`, true);
+                xhr.onload = function () {
+                    const res = JSON.parse(xhr.response);
+                    const btnElement = document.getElementById('start-button');
+                    const txtElement = document.getElementById('host-waiting-text');
+                    if(res.isHost) {
+                        btnElement.classList = ["primary-btn"];
+                        txtElement.classList = ["gray-text not-display"];
+                    } else {
+                        btnElement.classList = ["primary-btn not-display"];
+                        txtElement.classList = ["gray-text"];
+                    }
+                }
+                xhr.send();
+            }
             if(status == "WRITING") {
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", `../api/rooms/${roomId}/users/${userId}`, true);
                 xhr.onload = function () {
                     const res = JSON.parse(xhr.response);
                     document.getElementById("book-title").innerText = `『${res.title}』`;
-                    if(res.previousPage.length > 0) {
+                    if(res.previousPage) {
+                        if(res.previousPage[0] != null) {
+                            document.getElementById("previous-page").classList = [""];
+                        }
                         document.getElementById("previous-page").innerText = res.previousPage[0];
                     }
                     const minuteMax = parseInt(res.minuteMax);
                     const secondMax = minuteMax * 60;
-                    timer = secondMax
+                    timer = secondMax;
                     setInterval(countDown, 1000);
                 }
                 xhr.send();

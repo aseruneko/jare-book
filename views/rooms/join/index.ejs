@@ -8,27 +8,33 @@
     </head>
     <body>
         <header>
-            <h1>jar-book online beta</h1>
+            <h1>jar-book@1.1.0</h1>
         </header>
-        <section>
+        <section class="room-join">
             <p>ROOM ID と PLAYER NAME を入力のうえ参加してください。</p>
             <div>
-                <input type="text" id="room-id" placeholder="ROOM ID">
-                <input type="text" id="player-name" placeholder="PLAYER NAME">
+                <input type="text" id="room-id" class="long-text" placeholder="ROOM ID">
+                <input type="text" id="player-name" class="long-text" placeholder="PLAYER NAME">
             </div>
             <div>
             <div>
-                <button type="button" onclick="onClickButton()">
+                <button type="button" class="primary-btn" onclick="onClickButton()">
                     部屋に参加する
                 </button>
             </div>
         </section>
+        <section class="sub-card">
+            <h1>「ROOM ID」とは？</h1>
+            <p>部屋を作成した人の画面に表示されている、</p>
+            <p>何桁かにハイフンで区切られた英数字の文字列です</p>
+        </section>
         <footer>
             <a href="http://twitter.com/aseruneko">@aseruneko</a>
+            <a href="/">戻る</a>
         </footer>
         <script>
             function onClickButton() {
-                const roomId = document.getElementById("room-id").value;
+                const roomId = document.getElementById("room-id").value.replace(/\s+/g, "");
                 const playerName = document.getElementById("player-name").value;
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "../api/rooms/join", true);
