@@ -7,6 +7,7 @@ const http = require("http").Server(app);
 const io = require("socket.io")(http);
 
 const Room = require("./src/room");
+const { write } = require("fs");
 var rooms = [];
 
 app.set("view engine", "ejs");
@@ -34,11 +35,16 @@ app.get("/rooms/:id", (req,res) => {
 });
 
 app.post('/api/rooms/create',(req, res) =>  {
+  var writeOrderStyle = "ORDERED";
+  if(req.body.writeOrderRandom)  {
+    writeOrderStyle = "RANDOM"
+  }
   const room = Room.create(
     req.body.roomName,
     parseInt(req.body.minuteMax),
     parseInt(req.body.pageNum),
-    req.body.playerName
+    req.body.playerName,
+    writeOrderStyle,
   );
   rooms.push(room);
   res.json({roomId: room.id, userId: room.players[0].id});
@@ -93,12 +99,18 @@ app.get('/api/rooms/:roomId/users/:userId', (req,res) => {
   const room = rooms.find(room => room.id == req.params.roomId);
   const userId = req.params.userId;
   const book = room.pickBook(userId);
-  if(book.editingPageNum == 0) {
+  if(book.editPageNum == 0) {
     res.json({title: book.title, minuteMax: room.minuteMax, previousPage: []});
   } else {
     const page = room.pickPreviousPage(userId);
     res.json({title: book.title, minuteMax: room.minuteMax, previousPage: [page]});
   }
+});
+
+app.get('/api/rooms/:roomId/users/:userId/is-host', (req, res) => {
+  const room = rooms.find(room => room.id == req.params.roomId);
+  const userId = req.params.userId;
+  res.json({isHost: room.players[0].id == userId});
 });
 
 http.listen(port, () => console.log(`Example app listening on port ${port}!`));
