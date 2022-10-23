@@ -184,10 +184,14 @@ footer a {
     display: flex;
 }
 .book-room .player-board .player .name {
-    width: 400px;
+    width: 300px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    padding-left: 8px;
+}
+.book-room .player-board .player .memberNo {
+    width: 100px;
     padding-left: 8px;
 }
 .book-room .player-board .th {
@@ -283,4 +287,7 @@ footer a {
 }
 .red-alert {
     background-color: rgb(233 168 168) !important;
+}
+.room-creation .input-wrapper .long-text{
+    margin-top: 0;
 }

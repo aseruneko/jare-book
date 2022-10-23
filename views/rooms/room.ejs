@@ -9,7 +9,7 @@
     </head>
     <body id="book-room-body" class="book-room">
         <header>
-            <h1>jar-book@1.1.0</h1>
+            <h1>jar-book@<%- version %></h1>
         </header>
         <section>
             <div class="status-board">
@@ -42,11 +42,13 @@
                 <div class="player">
                     <div class="name th">名前</div>
                     <div class="memberNo th">席順</div>
+                    <div class="submitted th">提出</div>
                 </div>
                 <% players.forEach(function(player) { %>
                     <div class="player">
                         <div class="name"><%= player.name %></div>
                         <div class="memberNo"><%= player.memberNo + 1 %> 番目</div>
+                        <div id="<%= player.id %>-submitted" class="submitted">-</div>
                     </div>
                 <% }); %>
             </div>
@@ -242,6 +244,12 @@
                     window.location.reload();
                 }
             });
+            socket.on('userStatusUpdation', (message) => {
+                if (message.roomId == roomId) {
+                    const elemId = `${message.userId}-submitted`
+                    document.getElementById(elemId).innerText = '済';
+                }
+            })
             if(status == "WAITING") {
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", `../api/rooms/${roomId}/users/${userId}/is-host`, true);

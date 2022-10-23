@@ -74,7 +74,7 @@ class Room {
         editPageNum,
         writeOrderStyle,
         previousWriteOrder,
-        writeOrder,
+        writeOrder
     ) {
         this.id = id;
         this.roomName = roomName;
@@ -88,6 +88,7 @@ class Room {
         this.writeOrderStyle = writeOrderStyle;
         this.previousWriteOrder = previousWriteOrder;
         this.writeOrder = writeOrder;
+        this.createdAt = new Date();
     }
     startTitling() {
         this.status = RoomStatus.Titling;
