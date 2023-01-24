@@ -38,15 +38,11 @@ app.get("/rooms/:id", (req,res) => {
 
 app.post('/api/rooms/create',(req, res) =>  {
   var writeOrderStyle = "ORDERED";
-  if(req.body.writeOrderRandom)  {
-    writeOrderStyle = "RANDOM"
-  }
   const room = Room.create(
     req.body.roomName,
     parseInt(req.body.minuteMax),
     parseInt(req.body.pageNum),
-    req.body.playerName,
-    writeOrderStyle,
+    req.body.playerName
   );
   const now = new Date();
   rooms = rooms.filter(room => now.getTime() - room.createdAt.getTime() < 1000*60*60*24);
